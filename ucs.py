@@ -1,14 +1,5 @@
 from tfidf import TFIDF
-
-
-f = open('para1.txt')
-para = f.read().strip(' ').split('. ')
-f2=open('sentences.txt')
-sentences=f2.read().strip(' ').split('. ')
-print para,'paragraph'
-print len(sentences),'sentences'
-
-corpus=para+sentences
+import util
 
 #tfidf relevancy function
 def reward2(s1,s2):
@@ -26,7 +17,6 @@ def reward(s1,s2):
     return len(list(set(l1).intersection(l2)))+1
 
  #UCS search for our insertion problem!
-import util
 class InsertionProblem(util.SearchProblem):
     def __init__(self, sentences, paragraph, reward):
         self.sentences=sentences
@@ -70,10 +60,19 @@ def InsertSentences(sentences, para, reward):
         else:
             newpara.append(e)
     lastindex=para.index(newpara[-1])
-    print lastindex
     if lastindex!=len(para)-1:
         newpara=newpara+para[lastindex+1:]
-    #return ''.join(newpara)
-    return '. '.join(str(v) for v in newpara)
+    #return '. '.join(str(v) for v in newpara)
+    return [str(v) for v in newpara]
 
-print InsertSentences(sentences,para,reward)
+if __name__ == "__main__":
+    f = open('para1.txt')
+    para = f.read().strip(' ').split('. ')
+    f2=open('sentences.txt')
+    sentences=f2.read().strip(' ').split('. ')
+    #print para,'paragraph'
+    #print len(sentences),'sentences'
+
+    corpus=para+sentences
+
+    print InsertSentences(sentences,para,reward)
