@@ -33,9 +33,10 @@ class InsertionProblem(util.SearchProblem):
         succs=[]
         for i in range(len(state[2])):
             if state[2][i]==None:
-                nextstate=(self.para[state[3]+1],self.para[state[3]+2],state[2],state[3]+1)
-                r=1.0/(2*reward2(state[0],state[1]))
-                succs.append((None,nextstate,r))
+                if state[3]+2<len(self.para):
+                    nextstate=(self.para[state[3]+1],self.para[state[3]+2],state[2],state[3]+1)
+                    r=1.0/(2*reward2(state[0],state[1]))
+                    succs.append((None,nextstate,r))
             else:
                 choices=list(state[2][:])
                 del choices[i]
@@ -66,9 +67,9 @@ def InsertSentences(sentences, para, reward):
     return [str(v) for v in newpara]
 
 if __name__ == "__main__":
-    f = open('para1.txt')
+    f = open('para_test.txt')
     para = f.read().strip(' ').split('. ')
-    f2=open('sentences.txt')
+    f2=open('sens_test.txt')
     sentences=f2.read().strip(' ').split('. ')
     #print para,'paragraph'
     #print len(sentences),'sentences'
