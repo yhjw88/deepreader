@@ -28,11 +28,11 @@ class TFIDF(object):
         return corpus
 
     #build tf-idf
-    def get_tfidf(corpus):
+    def get_tfidf(self,corpus):
         tf = TfidfVectorizer(analyzer='word', ngram_range=(1,3), min_df = 0, stop_words = 'english')
         return tf.fit_transform(corpus)
 
-    def relevancy(tfidf, indices, sentence1, sentence2):
+    def relevancy(self,tfidf, indices, sentence1, sentence2):
         index1 = indices.index(sentence1)
         index2 = indices.index(sentence2)
         cos_sim = linear_kernel(tfidf[index1:index1+1], tfidf).flatten()
