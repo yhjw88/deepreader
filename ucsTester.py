@@ -32,8 +32,8 @@ def sectionGenerator(collection, sectionsToGenerate, articlesToSkip, minSentence
             ]
             if len(sentences) < minSentencesPerSection:
                 continue
-            else:
-                sectionNum += 1
+
+            sectionNum += 1
             yield sentences
 
 def getInsertionIndexes(inputSentences, newSection):
@@ -47,17 +47,18 @@ def getInsertionIndexes(inputSentences, newSection):
     return insertionIndexes
 
 def main():
-    sectionsToTest = 100
-    articlesToSkip = 10
+    sectionsToTest = 1000
+    articlesToSkip = 0
     numInputSentences = 2
     verbose = 0
 
     client = MongoClient()
     collection = client.cs229.wArticlesCleaned
 
-    numErrors = 0.0
-    sumNormalizedProximity = 0.0
-    sumSectionLength = 0.0
+    sumSentencesPerSection = 0.0
+    numInserted = 0.0
+    numInsertedCorrectly = 0.0
+    sumSentencesAway = 0.0
     for sectionNum, section in enumerate(sectionGenerator(collection,
                                                           sectionsToTest,
                                                           articlesToSkip,
@@ -80,19 +81,18 @@ def main():
             start = time.time()
             sys.stdout.flush()
         
-        # Update results.
-        sumSectionLength += len(expectedSection)
+        # Update metrics.
+        sumSentencesPerSection += len(expectedSection)
         expectedIndexes = getInsertionIndexes(inputSentences, expectedSection)
         actualIndexes = getInsertionIndexes(inputSentences, actualSection)
         for expectedIndex, actualIndex in zip(expectedIndexes, actualIndexes):
             if actualIndex is None:
-                numErrors += 1
-                sumNormalizedProximity += 1
-            else:
-                maxProximity = max(expectedIndex, len(expectedSection) - len(inputSentences) - expectedIndex)
-                sumNormalizedProximity += abs(expectedIndex - actualIndex) / (1.0 * maxProximity)
-                if actualIndex != expectedIndex:
-                    numErrors += 1
+                continue
+
+            numInserted += 1
+            if actualIndex == expectedIndex:
+                numInsertedCorrectly += 1
+            sumSentencesAway += abs(expectedIndex - actualIndex)
         if verbose:
             print "Error {} took {} s.".format(sectionNum, time.time() - start)
             start = time.time()
@@ -117,15 +117,16 @@ def main():
         #         outFile.write(sentence)
         #         outFile.write("\n")
 
-    avgSectionLength = sumSectionLength / sectionsToTest
-    avgError = numErrors / (sectionsToTest * numInputSentences)
-    avgNormalizedProximity = sumNormalizedProximity / (sectionsToTest * numInputSentences)
-    print "sectionsTested: {}, avgSectionLength: {}, insertionsPerSection: {}, avgError: {}, avgNormalizedProximity: {}".format(
-        sectionsToTest,
-        avgSectionLength,
-        numInputSentences,
-        avgError,
-        avgNormalizedProximity)
+    print (
+        "sectionsTested: {}, avgSectionLength: {}, insertionsPerSection: {}, " +
+        "numActuallyInserted: {}, avgInsertedCorretly: {}, avgSentencesAway: {}").format(
+            sectionsToTest,
+            sumSentencesPerSection / sectionsToTest,
+            numInputSentences,
+            numInserted,
+            numInsertedCorrectly / (sectionsToTest * numInputSentences),
+            sumSentencesAway / (sectionsToTest * numInputSentences)
+        )
 
 if __name__ == "__main__":
     main()
