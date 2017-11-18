@@ -24,7 +24,7 @@ class InsertionProblem(util.SearchProblem):
         self.reward = reward
 
     def startState(self):
-        return (self.para[0],self.para[1],tuple(sentences),0)
+        return (self.para[0],self.para[1],tuple(self.sentences),0)
 
     def isEnd(self, state):
         return str(state[1])==str(self.para[-1]) 
@@ -48,7 +48,7 @@ class InsertionProblem(util.SearchProblem):
 def InsertSentences(sentences, para, reward):
     if len(para) == 0:
         return ''
-    ucs = util.UniformCostSearch(verbose=1)
+    ucs = util.UniformCostSearch(verbose=0)
     sentences.append(None)
     ucs.solve(InsertionProblem(sentences, para, reward))
     newpara=[]
@@ -67,13 +67,13 @@ def InsertSentences(sentences, para, reward):
     return [str(v) for v in newpara]
 
 if __name__ == "__main__":
-    f = open('para_test.txt')
+    f = open('data/para1.txt')
     para = f.read().strip(' ').split('. ')
-    f2=open('sens_test.txt')
+    f2=open('data/sentences.txt')
     sentences=f2.read().strip(' ').split('. ')
     #print para,'paragraph'
     #print len(sentences),'sentences'
 
     corpus=para+sentences
 
-    print InsertSentences(sentences,para,reward)
+    print '\n'.join(InsertSentences(sentences,para,reward))

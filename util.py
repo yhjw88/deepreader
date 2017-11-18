@@ -56,7 +56,7 @@ class UniformCostSearch(SearchAlgorithm):
 
             # Check if we've reached an end state; if so, extract solution.
             if problem.isEnd(state):
-                print state,'should be end state'
+                # print state,'should be end state'
                 self.actions = []
                 while state != startState:
                     action, prevState = backpointers[state]

@@ -29,7 +29,7 @@ class TFIDF(object):
 
     #build tf-idf
     def get_tfidf(self,corpus):
-        tf = TfidfVectorizer(analyzer='word', ngram_range=(1,3), min_df = 0, stop_words = 'english')
+        tf = TfidfVectorizer(analyzer='word', ngram_range=(1,3), min_df = 0, stop_words = 'english', decode_error='ignore')
         return tf.fit_transform(corpus)
 
     def relevancy(self,tfidf, indices, sentence1, sentence2):
