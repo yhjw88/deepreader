@@ -22,17 +22,37 @@ def createWNPairs(nArticles, wArticles):
                 nIdSet[nArticle["url"]] += 1
     return wnPairs
 
+# Calculate cosinge similarities for the given data.
+def calculateCosineSimilarities(articles, tf, tfidfMatrixOrigin):
+    corpus = []
+    for article in articles:
+        corpus.append(article["scrapedTitle"])
+        article["titleCorpusIndex"] = len(corpus) - 1
+        corpus.append(article["scrapedText"])
+        article["textCorpusIndex"] = len(corpus) - 1
+    tfidfMatrix = tf.transform(corpus)
+    return linear_kernel(tfidfMatrix, tfidfMatrixOrigin)
+
 # Extracts cosine similarity features for X, and labels Y.
 def extractFeatures(wnPairs, cosineSimMatrix):
     Y = np.zeros(len(wnPairs))
     X = np.zeros((len(wnPairs), 2))
     for i, (wArticle, nArticle) in enumerate(wnPairs):
-        if i % 100 == 0:
-            print "Stored {} pairs so far...".format(i)
-            sys.stdout.flush()
         Y[i] = 1 if wArticle["_id"] in nArticle["wikipediaId"] else -1
         X[i][0] = cosineSimMatrix[nArticle["titleCorpusIndex"]][wArticle["titleCorpusIndex"]]
         X[i][1] = cosineSimMatrix[nArticle["textCorpusIndex"]][wArticle["textCorpusIndex"]]
+    return X, Y
+
+# Extracts cosine similarity features for X, and labels Y.
+def extractFeatures2(wnPairs, cosineSimMatrix):
+    Y = np.zeros(len(wnPairs))
+    X = np.zeros((len(wnPairs), 4))
+    for i, (wArticle, nArticle) in enumerate(wnPairs):
+        Y[i] = 1 if wArticle["_id"] in nArticle["wikipediaId"] else -1
+        X[i][0] = cosineSimMatrix[nArticle["titleCorpusIndex"]][wArticle["titleCorpusIndex"]]
+        X[i][1] = cosineSimMatrix[nArticle["textCorpusIndex"]][wArticle["textCorpusIndex"]]
+        X[i][2] = (cosineSimMatrix[nArticle["titleCorpusIndex"]][wArticle["titleCorpusIndex"]])**2
+        X[i][3] = (cosineSimMatrix[nArticle["textCorpusIndex"]][wArticle["textCorpusIndex"]])**2
     return X, Y
 
 def main():
@@ -41,13 +61,14 @@ def main():
     nCollection = client.cs229.nytArticles
 
     # 2000 references for train, 1000 references for test.
-    nArticlesTrain = list(nCollection.find().sort([("wikipediaId", pymongo.ASCENDING)]).limit(2000))
-    nArticlesTest = list(nCollection.find().sort([("wikipediaId", pymongo.ASCENDING)]).skip(2000).limit(1000))
+    nArticlesTrain = list(nCollection.find().sort([("wikipediaId", pymongo.ASCENDING)]).limit(2400))
+    nArticlesDev = list(nCollection.find().sort([("wikipediaId", pymongo.ASCENDING)]).skip(2400).limit(800))
+    nArticlesTest = list(nCollection.find().sort([("wikipediaId", pymongo.ASCENDING)]).skip(3200).limit(800))
 
     # Fetch all the linked articles.
     wArticles = []
     wIdSet = {}
-    for nArticle in (nArticlesTrain + nArticlesTest):
+    for nArticle in (nArticlesTrain + nArticlesDev + nArticlesTest):
         # Fetch the wikipedia article(s) if necessary.
         for wikipediaId in nArticle["wikipediaId"]:
             if wikipediaId in wIdSet:
@@ -69,7 +90,7 @@ def main():
         article["titleCorpusIndex"] = len(corpus) - 1
         corpus.append(article["scrapedText"])
         article["textCorpusIndex"] = len(corpus) - 1
-    tf = TfidfVectorizer(analyzer='word', 
+    tf = TfidfVectorizer(analyzer='word',
                          ngram_range=(1,3),
                          min_df = 0,
                          stop_words = 'english',
@@ -79,20 +100,19 @@ def main():
     print "Finished tfidf for train"
     sys.stdout.flush()
 
-    # Calculate cosine similarities for test data.
-    corpusTest = []
-    for article in nArticlesTest:
-        corpusTest.append(article["scrapedTitle"])
-        article["titleCorpusIndex"] = len(corpusTest) - 1
-        corpusTest.append(article["scrapedText"])
-        article["textCorpusIndex"] = len(corpusTest) - 1
-    tfidfMatrixTest = tf.transform(corpusTest)
-    cosineSimMatrixTest = linear_kernel(tfidfMatrixTest, tfidfMatrix)
+    # Calculate cosine similarities for dev.
+    cosineSimMatrixDev = calculateCosineSimilarities(nArticlesDev, tf, tfidfMatrix)
+    print "Finished tfidf for dev"
+    sys.stdout.flush()
+
+    # Calculate cosine similarities for dev.
+    cosineSimMatrixTest = calculateCosineSimilarities(nArticlesTest, tf, tfidfMatrix)
     print "Finished tfidf for test"
     sys.stdout.flush()
 
     # Create the (w, n) pairs.
     wnPairsTrain = createWNPairs(nArticlesTrain, wArticles)
+    wnPairsDev = createWNPairs(nArticlesDev, wArticles)
     wnPairsTest = createWNPairs(nArticlesTest, wArticles)
     print "Finished creating pairs"
     sys.stdout.flush()
@@ -101,14 +121,39 @@ def main():
     XTrain, YTrain = extractFeatures(wnPairsTrain, cosineSimMatrix)
     np.savetxt("data/docMatchTrainX.txt", XTrain)
     np.savetxt("data/docMatchTrainY.txt", YTrain)
-    print "Outputted training data."
+    print "Outputted training data, {}".format(len(YTrain))
+    sys.stdout.flush()
+
+    # Extract features for dev data.
+    XDev, YDev = extractFeatures(wnPairsDev, cosineSimMatrixDev)
+    np.savetxt("data/docMatchDevX.txt", XDev)
+    np.savetxt("data/docMatchDevY.txt", YDev)
+    print "Outputted dev data, {}".format(len(YDev))
     sys.stdout.flush()
 
     # Extract features for test data.
     XTest, YTest = extractFeatures(wnPairsTest, cosineSimMatrixTest)
     np.savetxt("data/docMatchTestX.txt", XTest)
     np.savetxt("data/docMatchTestY.txt", YTest)
-    print "Outputted test data."
+    print "Outputted test data, {}".format(len(YTest))
+    sys.stdout.flush()
+
+    # Extract features 2 for training data.
+    XTrain, _ = extractFeatures2(wnPairsTrain, cosineSimMatrix)
+    np.savetxt("data/docMatchTrain2X.txt", XTrain)
+    print "Outputted training data 2, {}".format(len(YTrain))
+    sys.stdout.flush()
+
+    # Extract features 2 for dev data.
+    XDev, _ = extractFeatures2(wnPairsDev, cosineSimMatrixDev)
+    np.savetxt("data/docMatchDev2X.txt", XDev)
+    print "Outputted dev data 2, {}".format(len(YDev))
+    sys.stdout.flush()
+
+    # Extract features 2 for test data.
+    XTest, _ = extractFeatures2(wnPairsTest, cosineSimMatrixTest)
+    np.savetxt("data/docMatchTest2X.txt", XTest)
+    print "Outputted test data 2, {}".format(len(YTest))
     sys.stdout.flush()
 
 if __name__ == '__main__':

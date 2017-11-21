@@ -44,11 +44,10 @@ class LogisticRegression:
             prev_theta = theta
             grad = self.calcGrad(X, Y, theta)
             theta = theta  - learningRate * (grad)
+            # theta = theta  - learningRate * (grad + 0.00001 * theta)
             if i % 10000 == 0:
                 print 'Iterations: {}, Grad: {}, Theta: {}'.format(i, np.linalg.norm(grad, 1), theta)
                 sys.stdout.flush()
-                if i > 500000:
-                    break
             if np.linalg.norm(prev_theta - theta) < 1e-15:
                 print('Converged in %d iterations' % i)
                 break
@@ -60,7 +59,7 @@ class LogisticRegression:
         scores = np.dot(testX, self.theta)
         return [1 if score >= 0 else -1 for score in scores]
 
-    def plot(self, filename="data/plot.png"):
+    def plotLin(self, filename="data/plot.png"):
         X = self.X
         Y = self.Y
         theta = self.theta
@@ -89,30 +88,98 @@ class LogisticRegression:
         plt.plot(x1Pluses, x2Pluses, "b+")
         plt.plot(x1Minuses, x2Minuses, "r.")
         plt.plot([linep1x1, linep2x1], [linep1x2, linep2x2], "g-")
-        plt.xlabel("x_1")
-        plt.ylabel("x_2")
+        plt.xlabel("title")
+        plt.ylabel("text")
         plt.savefig(filename)
         return
 
-def main():
+    def plotQuad(self, filename="data/plotq.png"):
+        X = self.X
+        Y = self.Y
+        theta = self.theta
+        plt.figure()
+
+        # Split the list of x's.
+        x1Pluses = []
+        x2Pluses = []
+        x1Minuses = []
+        x2Minuses = []
+        for xRow, y in zip(X, Y):
+            if y > 0:
+                x1Pluses.append(xRow[1])
+                x2Pluses.append(xRow[2])
+            else:
+                x1Minuses.append(xRow[1])
+                x2Minuses.append(xRow[2])
+
+        # Get some points for the curve.
+        linex1s = []
+        linex2s = []
+        for i, row in enumerate(X):
+            if i % 20 == 0:
+                linex1s.append(row[1])
+                roots = np.roots([theta[4], theta[2], theta[0] + theta[1] * row[1] + theta[3] * row[3]])
+                linex2s.append(max(roots))
+
+        # Now plot the things.
+        plt.plot(x1Pluses, x2Pluses, "b+")
+        plt.plot(x1Minuses, x2Minuses, "r.")
+        plt.plot(linex1s, linex2s, "g-")
+        plt.xlabel("title")
+        plt.ylabel("text")
+        plt.savefig(filename)
+        return
+
+def countCorrect(actualYs, predictedYs):
+    count = 0
+    for actY, preY in zip(actualYs, predictedYs):
+        if actY == preY:
+            count += 1
+    return count
+
+def reg1():
     # Do regression.
     logisticRegression = LogisticRegression(np.loadtxt("data/docMatchTrainX.txt"), np.loadtxt("data/docMatchTrainY.txt"))
     logisticRegression.doWork(10)
-    logisticRegression.plot()
+    logisticRegression.plotLin()
+
+    # Dev accuracy
+    devX = np.loadtxt("data/docMatchDevX.txt")
+    devY = np.loadtxt("data/docMatchDevY.txt")
+    predictedY = logisticRegression.getPredicted(devX)
+    print "Dev correct: {} total: {}".format(countCorrect(devY, predictedY), len(devY))
+    logisticRegression.resetData(devX, devY)
+    logisticRegression.plotLin("data/plot2.png")
 
     # Test accuracy
     testX = np.loadtxt("data/docMatchTestX.txt")
     testY = np.loadtxt("data/docMatchTestY.txt")
     predictedY = logisticRegression.getPredicted(testX)
-    count = 0
-    for actY, preY in zip(testY, predictedY):
-        if actY == preY:
-            count += 1
-    print "Num correct: {} Num total: {}".format(count, len(testY))
+    print "Test correct: {} total: {}".format(countCorrect(testY, predictedY), len(testY))
 
-    # Plot it for fun.
-    logisticRegression.resetData(np.loadtxt("data/docMatchTestX.txt"), np.loadtxt("data/docMatchTestY.txt"))
-    logisticRegression.plot("data/plot2.png")
+def reg2():
+    # Do regression.
+    logisticRegression = LogisticRegression(np.loadtxt("data/docMatchTrain2X.txt"), np.loadtxt("data/docMatchTrainY.txt"))
+    logisticRegression.doWork(10)
+    logisticRegression.plotQuad()
+
+    # Dev accuracy
+    devX = np.loadtxt("data/docMatchDev2X.txt")
+    devY = np.loadtxt("data/docMatchDevY.txt")
+    predictedY = logisticRegression.getPredicted(devX)
+    print "Dev correct: {} total: {}".format(countCorrect(devY, predictedY), len(devY))
+    logisticRegression.resetData(devX, devY)
+    logisticRegression.plotQuad("data/plotq2.png")
+
+    # Test accuracy
+    testX = np.loadtxt("data/docMatchTest2X.txt")
+    testY = np.loadtxt("data/docMatchTestY.txt")
+    predictedY = logisticRegression.getPredicted(testX)
+    print "Test correct: {} total: {}".format(countCorrect(testY, predictedY), len(testY))
+
+def main():
+    reg1()
+    # reg2()
 
 if __name__ == '__main__':
     main()
