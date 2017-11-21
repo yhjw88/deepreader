@@ -11,7 +11,7 @@ def main():
     testY = np.loadtxt("data/docMatchTestY.txt")
 
     # knn.
-    classifier = sklearn.neighbors.KNeighborsClassifier(math.ceil(math.sqrt(len(trainY))))
+    classifier = sklearn.neighbors.KNeighborsClassifier(int(math.sqrt(len(trainY))))
     classifier.fit(trainX, trainY)
     print "-KNN-"
     print metrics.accuracy_score(testY, classifier.predict(testX))
