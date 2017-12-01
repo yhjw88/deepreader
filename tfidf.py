@@ -37,3 +37,8 @@ class TFIDF(object):
         index2 = indices.index(sentence2)
         cos_sim = linear_kernel(tfidf[index1:index1+1], tfidf).flatten()
         return cos_sim[index2]
+    
+    def similar_docs(self, tfidf_matrix, index, top_n = 5):
+        cosine_similarities = linear_kernel(tfidf_matrix[index:index+1], tfidf_matrix).flatten()
+        related_docs_indices = [i for i in cosine_similarities.argsort()[::-1] if i != index]
+        return [(index, cosine_similarities[index]) for index in related_docs_indices][0:top_n]
