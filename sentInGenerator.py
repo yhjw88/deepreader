@@ -75,7 +75,7 @@ def dumpToFile(dataList, filename):
 
 def main():
     # Data Format
-    # { section: [...], sentences: [...], insertionIndexes: [...] }
+    # { prelimSection: [...] section: [...], sentences: [...], insertionIndexes: [...] }
     # One insertionIndex per sentence in sentences.
     # insertionIndex is n, 0 <= n <= len(section), or None.
     # 0 section[0] 1 section[1] 2 section[2] 3 section[3] 4
@@ -112,6 +112,7 @@ def main():
     for prelimSection in prelimSections:
         data = {}
         numCorrectSentences = random.randint(numCorrectSentencesRange[0], numCorrectSentencesRange[1])
+        data["prelimSection"] = prelimSection
         data["sentences"] = random.sample(prelimSection, numCorrectSentences)
         data["section"] = [sentence for sentence in prelimSection if (sentence not in data["sentences"])]
         random.shuffle(data["section"])

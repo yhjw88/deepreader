@@ -38,7 +38,7 @@ def main():
         # Call the algorithm.
         ucs.corpus = data["section"] + data["sentences"]
         actualSection = ucs.InsertSentences(list(data["sentences"]), list(data["section"]), ucs.reward)
-        
+
         # Update metrics.
         sumSentencesPerSection += len(data["section"])
         actualIndexes = getInsertionIndexes(data["sentences"], actualSection)
