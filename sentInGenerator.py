@@ -84,8 +84,8 @@ def main():
     numSectionsToUseThousands = 5
     articlesToSkipRange = [0, 10]
     sectionsPerArticleRange = [1, 3]
-    minSentencesPerSection = 12
-    numCorrectSentencesRange = [1, 2]
+    minSentencesPerSection = 10
+    numCorrectSentencesRange = [1, 1]
     # TODO: numIncorrectSentencesRange = [0, 3]
     outFilePrefix = "data/sentIn"
 
@@ -114,8 +114,8 @@ def main():
         numCorrectSentences = random.randint(numCorrectSentencesRange[0], numCorrectSentencesRange[1])
         data["prelimSection"] = prelimSection
         data["sentences"] = random.sample(prelimSection, numCorrectSentences)
+        random.shuffle(data["sentences"])
         data["section"] = [sentence for sentence in prelimSection if (sentence not in data["sentences"])]
-        random.shuffle(data["section"])
         data["insertionIndexes"] = getInsertionIndexes(data["sentences"],  prelimSection)
         dataList.append(data)
 
