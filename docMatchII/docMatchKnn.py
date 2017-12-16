@@ -24,11 +24,11 @@ def main():
         print "k: {}, dev acc: {}".format(k, acc2)
         sys.stdout.flush()
         if acc2 > acc1:
-            k += 100
+            k += 10
             acc1 = acc2
         else:
             worse = True
-    k -= 100
+    k -= 10
 
     # Output on test.
     # classifier.fit(testX, testY)

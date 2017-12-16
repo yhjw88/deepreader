@@ -31,9 +31,9 @@ def main():
     k -= 100
 
     # Output on test.
-    classifier.fit(testX, testY)
-    acc = metrics.accuracy_score(testY, classifier.predict(testX))
-    print "final k: {}, test acc: {}".format(k, acc)
+    # classifier.fit(testX, testY)
+    # acc = metrics.accuracy_score(testY, classifier.predict(testX))
+    # print "final k: {}, test acc: {}".format(k, acc)
 
 if __name__ == '__main__':
     main()
